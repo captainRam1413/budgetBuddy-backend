@@ -32,6 +32,11 @@ try:
 except Exception:
     pass
 
+# Automatically append sslmode=require if connecting to cloud PostgreSQL
+if raw_db_url.startswith("postgresql://") and 'sslmode=' not in raw_db_url:
+    delim = '&' if '?' in raw_db_url else '?'
+    raw_db_url = f"{raw_db_url}{delim}sslmode=require"
+
 class Config:
     PORT = int(os.getenv('PORT', 5000))
     FLASK_ENV = os.getenv('FLASK_ENV', 'development')
