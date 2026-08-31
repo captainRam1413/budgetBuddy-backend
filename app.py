@@ -18,23 +18,29 @@ class VercelPathFixMiddleware:
     def __call__(self, environ, start_response):
         path_info = environ.get('PATH_INFO', '')
         
-        # Check all headers Vercel/proxies send with the original request path
-        matched_path = (
-            environ.get('HTTP_X_MATCHED_PATH') or
-            environ.get('HTTP_X_FORWARDED_URI') or
-            environ.get('HTTP_X_REWRITE_URL') or
-            environ.get('HTTP_X_ORIGINAL_URL') or
-            environ.get('HTTP_X_VERCEL_FORWARDED_PATH') or
-            environ.get('RAW_URI') or
-            environ.get('REQUEST_URI')
-        )
+        # Check candidate headers for actual requested URL path
+        candidates = [
+            environ.get('HTTP_X_FORWARDED_URI'),
+            environ.get('RAW_URI'),
+            environ.get('REQUEST_URI'),
+            environ.get('HTTP_X_ORIGINAL_URL'),
+            environ.get('HTTP_X_REWRITE_URL'),
+            environ.get('HTTP_X_VERCEL_FORWARDED_PATH')
+        ]
         
-        if matched_path and matched_path not in ['/api/index', '/api/index.py']:
-            environ['PATH_INFO'] = matched_path.split('?')[0]
+        real_path = None
+        for candidate in candidates:
+            if candidate and not candidate.startswith('/api/index') and '*' not in candidate and '(.*)' not in candidate:
+                real_path = candidate.split('?')[0]
+                break
+        
+        if real_path:
+            environ['PATH_INFO'] = real_path
         elif path_info in ['/api/index', '/api/index.py']:
             environ['PATH_INFO'] = '/'
 
         return self.app(environ, start_response)
+
 
 def create_app():
     app = Flask(__name__)
