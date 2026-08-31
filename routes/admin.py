@@ -1019,8 +1019,10 @@ FULL_DATABASE_STUDIO_HTML = """
 """
 
 @admin_bp.route('/', methods=['GET'])
+@admin_bp.route('', methods=['GET'])
 def admin_panel():
     return render_template_string(FULL_DATABASE_STUDIO_HTML)
+
 
 
 @admin_bp.route('/api/overview', methods=['GET'])
