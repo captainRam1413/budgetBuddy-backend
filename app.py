@@ -60,7 +60,9 @@ def create_app():
     # Health check route
     @app.route('/health', methods=['GET'])
     def health_check():
-        return jsonify({'status': 'healthy', 'orm': 'SQLAlchemy', 'database': 'SQLite', 'service': 'budgetBuddy-backend'}), 200
+        db_type = 'PostgreSQL' if 'postgres' in db.engine.name.lower() else ('SQLite' if 'sqlite' in db.engine.name.lower() else db.engine.name)
+        return jsonify({'status': 'healthy', 'orm': 'SQLAlchemy', 'database': db_type, 'service': 'budgetBuddy-backend'}), 200
+
 
     @app.route('/debug-env', methods=['GET'])
     def debug_env():
