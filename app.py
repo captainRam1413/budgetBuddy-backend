@@ -67,9 +67,14 @@ def create_app():
     @app.route('/debug-env', methods=['GET'])
     def debug_env():
         from flask import request
-        headers = {k: v for k, v in request.headers.items()}
-        environ_keys = {k: str(v) for k, v in request.environ.items() if isinstance(v, (str, int, float, bool))}
-        return jsonify({'headers': headers, 'environ': environ_keys, 'path': request.path}), 200
+        db_url_env = os.getenv('DATABASE_URL')
+        return jsonify({
+            'has_database_url_env': bool(db_url_env),
+            'db_url_prefix': db_url_env[:25] + '...' if db_url_env else 'NOT_SET_IN_VERCEL',
+            'sqlalchemy_uri_active': app.config.get('SQLALCHEMY_DATABASE_URI', '')[:25] + '...',
+            'active_engine_name': db.engine.name
+        }), 200
+
 
 
     @app.route('/', methods=['GET'])
