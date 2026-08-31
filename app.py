@@ -241,5 +241,6 @@ def create_app():
 app = create_app()
 
 if __name__ == '__main__':
-    print(f"🚀 Starting BudgetBuddy Backend Server (SQLAlchemy ORM) on port {Config.PORT}...")
+    print(f"[Start] Starting BudgetBuddy Backend Server (SQLAlchemy ORM) on port {Config.PORT}...")
     app.run(host='0.0.0.0', port=Config.PORT, debug=(Config.FLASK_ENV == 'development'))
+

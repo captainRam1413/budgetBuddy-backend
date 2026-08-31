@@ -523,7 +523,8 @@ FULL_DATABASE_STUDIO_HTML = """
         </div>
 
         <div style="display: flex; align-items: center; gap: 16px;">
-            <span class="db-badge">SQLite Database (SQLAlchemy ORM)</span>
+            <span class="db-badge">PostgreSQL Database (Supabase ORM)</span>
+
             <button class="btn-action btn-secondary" onclick="logout()">Logout</button>
         </div>
     </div>
