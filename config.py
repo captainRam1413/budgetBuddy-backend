@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 
 import tempfile
 
+from urllib.parse import quote, unquote
+
 load_dotenv()
 
 db_url = os.getenv('DATABASE_URL')
@@ -14,8 +16,25 @@ if not db_url:
         db_url = f'sqlite:///{tmp_db}'
     else:
         db_url = 'sqlite:///budgetbuddy.db'
-elif db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql://", 1)
+else:
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    
+    # Automatically encode special characters (like '@') in database passwords
+    try:
+        if '://' in db_url and '@' in db_url:
+            scheme, rest = db_url.split('://', 1)
+            last_at_index = rest.rfind('@')
+            if last_at_index != -1:
+                user_pass = rest[:last_at_index]
+                host_db = rest[last_at_index+1:]
+                if ':' in user_pass:
+                    user, pwd = user_pass.split(':', 1)
+                    encoded_pwd = quote(unquote(pwd))
+                    db_url = f"{scheme}://{user}:{encoded_pwd}@{host_db}"
+    except Exception:
+        pass
+
 
 class Config:
     PORT = int(os.getenv('PORT', 5000))
