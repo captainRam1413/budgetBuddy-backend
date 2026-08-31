@@ -10,9 +10,35 @@ from routes.category import category_bp
 from routes.expense import expense_bp
 from routes.admin import admin_bp
 
+class VercelPathFixMiddleware:
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        path_info = environ.get('PATH_INFO', '')
+        
+        # Check all headers Vercel/proxies send with the original request path
+        matched_path = (
+            environ.get('HTTP_X_MATCHED_PATH') or
+            environ.get('HTTP_X_FORWARDED_URI') or
+            environ.get('HTTP_X_REWRITE_URL') or
+            environ.get('HTTP_X_ORIGINAL_URL') or
+            environ.get('HTTP_X_VERCEL_FORWARDED_PATH') or
+            environ.get('RAW_URI') or
+            environ.get('REQUEST_URI')
+        )
+        
+        if matched_path and matched_path not in ['/api/index', '/api/index.py']:
+            environ['PATH_INFO'] = matched_path.split('?')[0]
+        elif path_info in ['/api/index', '/api/index.py']:
+            environ['PATH_INFO'] = '/'
+
+        return self.app(environ, start_response)
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    app.wsgi_app = VercelPathFixMiddleware(app.wsgi_app)
 
     # Enable CORS for frontend integration
     CORS(app, resources={r"/api/*": {"origins": "*"}, r"/admin/*": {"origins": "*"}})
@@ -23,10 +49,19 @@ def create_app():
     # Initialize Database Tables
     init_db(app)
 
+
     # Health check route
     @app.route('/health', methods=['GET'])
     def health_check():
         return jsonify({'status': 'healthy', 'orm': 'SQLAlchemy', 'database': 'SQLite', 'service': 'budgetBuddy-backend'}), 200
+
+    @app.route('/debug-env', methods=['GET'])
+    def debug_env():
+        from flask import request
+        headers = {k: v for k, v in request.headers.items()}
+        environ_keys = {k: str(v) for k, v in request.environ.items() if isinstance(v, (str, int, float, bool))}
+        return jsonify({'headers': headers, 'environ': environ_keys, 'path': request.path}), 200
+
 
     @app.route('/', methods=['GET'])
     def root():
