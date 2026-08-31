@@ -32,6 +32,19 @@ if not raw_db_url:
 if raw_db_url.startswith("postgres://"):
     raw_db_url = raw_db_url.replace("postgres://", "postgresql://", 1)
 
+# Auto-convert direct Supabase hostname (IPv6-only on Vercel) to IPv4 Pooler
+if 'db.tebujzgndtzmhiodazsd.supabase.co' in raw_db_url:
+    raw_db_url = raw_db_url.replace(
+        'db.tebujzgndtzmhiodazsd.supabase.co:5432',
+        'aws-0-ap-southeast-1.pooler.supabase.com:6543'
+    ).replace(
+        'db.tebujzgndtzmhiodazsd.supabase.co',
+        'aws-0-ap-southeast-1.pooler.supabase.com:6543'
+    )
+    if '://postgres:' in raw_db_url:
+        raw_db_url = raw_db_url.replace('://postgres:', '://postgres.tebujzgndtzmhiodazsd:', 1)
+
+
 # Automatically encode special characters (like '@') in database passwords
 try:
     if '://' in raw_db_url and '@' in raw_db_url:
